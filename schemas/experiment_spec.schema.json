@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExperimentSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "track_id",
+    "stage",
+    "hypothesis",
+    "model_variant",
+    "baseline_id",
+    "train_budget_gpu_h",
+    "infer_budget_gpu_h",
+    "max_context",
+    "datasets",
+    "metrics",
+    "seeds",
+    "promotion_gate"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "track_id": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3", "T4", "T5", "T6"]
+    },
+    "stage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "hypothesis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_variant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "train_budget_gpu_h": {
+      "type": "number",
+      "minimum": 0
+    },
+    "infer_budget_gpu_h": {
+      "type": "number",
+      "minimum": 0
+    },
+    "max_context": {
+      "type": "integer",
+      "minimum": 1024
+    },
+    "datasets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "seeds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "promotion_gate": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

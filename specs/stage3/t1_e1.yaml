@@ -1,0 +1,41 @@
+{
+  "id": "s3-t1-e1",
+  "track_id": "T1",
+  "stage": 3,
+  "hypothesis": "Hybrid photonic-digital acceleration enables longer effective context and ensemble gains at equal cost.",
+  "model_variant": "T1-E1",
+  "baseline_id": "s3-t1-baseline",
+  "train_budget_gpu_h": 1000.0,
+  "infer_budget_gpu_h": 200.0,
+  "max_context": 1000000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "needle_128k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "noise_robustness_auc",
+    "latency_energy_proxy"
+  ],
+  "seeds": [
+    301,
+    302
+  ],
+  "promotion_gate": {
+    "next_stage": "final",
+    "delta_composite_min": 8.0,
+    "bootstrap_ci_excludes_zero": true
+  },
+  "params": {
+    "noise_model": "analog_v1"
+  }
+}

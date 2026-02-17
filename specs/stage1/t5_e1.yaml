@@ -1,0 +1,43 @@
+{
+  "id": "s1-t5-e1",
+  "track_id": "T5",
+  "stage": 1,
+  "hypothesis": "Self-assembled constrained neural circuits improve specialization and reliability over fixed graphs.",
+  "model_variant": "T5-E1",
+  "baseline_id": "s1-t5-baseline",
+  "train_budget_gpu_h": 120.0,
+  "infer_budget_gpu_h": 30.0,
+  "max_context": 128000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "needle_128k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "invalid_plan_rate",
+    "run_variance"
+  ],
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "promotion_gate": {
+    "next_stage": 2,
+    "delta_composite_min": 3.0,
+    "stable_training_required": true,
+    "max_fluency_drop_pct": 2.0
+  },
+  "params": {
+    "max_nodes": 8
+  }
+}

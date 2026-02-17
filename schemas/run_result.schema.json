@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "spec_id",
+    "commit_sha",
+    "seed",
+    "train_cost",
+    "infer_cost",
+    "latency_p50",
+    "latency_p95",
+    "energy_kwh",
+    "metric_values",
+    "failure_flags",
+    "track_id",
+    "stage",
+    "model_variant",
+    "benchmark_scores"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "train_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "infer_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "latency_p50": {
+      "type": "number",
+      "minimum": 0
+    },
+    "latency_p95": {
+      "type": "number",
+      "minimum": 0
+    },
+    "energy_kwh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "metric_values": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "failure_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "track_id": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3", "T4", "T5", "T6"]
+    },
+    "stage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "model_variant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "benchmark_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

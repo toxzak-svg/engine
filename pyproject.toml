@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "engine-exp"
+version = "0.1.0"
+description = "Stage-gated experiment harness for six long-context and reasoning tracks."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+exp = "exp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["exp*"]

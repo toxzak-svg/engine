@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComparisonReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_run_ids",
+    "baseline_run_ids",
+    "delta_metrics",
+    "significance_tests",
+    "pass_fail",
+    "candidate_stage",
+    "track_id"
+  ],
+  "properties": {
+    "candidate_run_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "baseline_run_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "delta_metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "significance_tests": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "pass_fail": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "candidate_stage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "track_id": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3", "T4", "T5", "T6"]
+    }
+  }
+}

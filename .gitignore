@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.egg-info/
+artifacts/runs/*.json
+artifacts/comparisons/*.json
+artifacts/memos/*.md
+.pytest_cache/

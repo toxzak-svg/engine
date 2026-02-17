@@ -1,0 +1,34 @@
+{
+  "program_name": "six_track_experiment_program",
+  "hardware_assumption": "8x A100 80GB (or equivalent)",
+  "total_budget_gpu_h": 5400,
+  "stages": {
+    "0": {"budget_gpu_h": 300, "description": "baseline + harness contract freeze"},
+    "1": {"budget_gpu_h": 900, "per_track_budget_gpu_h": 150, "description": "all six tracks proxy runs"},
+    "2": {"budget_gpu_h": 1800, "per_track_budget_gpu_h": 600, "description": "top three scale-up"},
+    "3": {"budget_gpu_h": 2400, "per_track_budget_gpu_h": 1200, "description": "top two confirmatory runs"}
+  },
+  "baseline_model": {
+    "architecture": "decoder-only transformer",
+    "size": "~1.3B",
+    "position_embedding": "RoPE",
+    "attention": "GQA",
+    "tokenizer_family": "shared",
+    "optimizer_family": "shared"
+  },
+  "benchmark_suite": [
+    "Needle-in-a-Haystack-32k",
+    "Needle-in-a-Haystack-64k",
+    "Needle-in-a-Haystack-128k",
+    "LongBench-subset",
+    "GSM8K",
+    "BBH-subset",
+    "Contradiction-Consistency-longform"
+  ],
+  "composite_weights": {
+    "long_context": 0.45,
+    "reasoning": 0.35,
+    "consistency": 0.2
+  },
+  "equal_cost_tolerance_pct": 2.0
+}
