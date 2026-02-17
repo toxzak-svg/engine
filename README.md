@@ -43,10 +43,13 @@ Batch-run a full stage (all tracks, baseline + experiments):
 ```bash
 python scripts/run_stage.py --stage 1
 python scripts/run_stage.py --stage 1 --all-seeds
+python scripts/run_stage.py --stage 2 --all-seeds --selection-marker artifacts/memos/full_program_run_marker.txt
+python scripts/run_stage.py --stage 3 --all-seeds --selection-marker artifacts/memos/full_program_run_marker.txt
 python scripts/run_stage.py --stage 4 --all-seeds
 ```
 
 `run_stage.py` automatically runs `specs/stageX/anchor_baseline.yaml` once per seed and records anchor-relative deltas in comparison reports.
+For stage 2 and stage 3, it auto-selects promoted tracks from the previous stage gate output (override with `--tracks T3,T4` when needed).
 
 Run focused recovery sweeps for T4/T5:
 
@@ -71,6 +74,7 @@ This writes:
 - `artifacts/memos/final_run_manifest.json`
 
 The consolidated memo ranks tracks primarily by anchor-relative gains.
+Final ordering uses a pass-adjusted decision score and excludes recovery sweeps from primary stage ranking stats.
 
 ## Protocol Defaults
 

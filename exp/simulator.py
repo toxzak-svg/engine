@@ -195,7 +195,14 @@ def _track_specific_metrics(
         )
     elif spec.track_id == "T5":
         max_nodes = int(spec.params.get("max_nodes", 12))
-        invalid_rate = max(0.0, base_metrics["invalid_plan_rate"] + max(0, max_nodes - 12) * 0.7 - stage_multiplier)
+        invalid_rate = base_metrics["invalid_plan_rate"] + max(0, max_nodes - 12) * 0.7 - 0.9 * stage_multiplier
+        if bool(spec.params.get("typed_io_enforced", False)):
+            invalid_rate -= 0.6
+        if bool(spec.params.get("deterministic_fallback", False)):
+            invalid_rate -= 0.4
+        if bool(spec.params.get("planner_prune", False)):
+            invalid_rate -= 0.25
+        invalid_rate = max(0.0, invalid_rate)
         metrics["invalid_plan_rate"] = round(invalid_rate, 4)
         metrics["run_variance"] = round(max(0.4, base_metrics["run_variance"] - effect.consistency_delta), 4)
     elif spec.track_id == "T6":
