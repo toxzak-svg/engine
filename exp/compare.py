@@ -7,8 +7,13 @@ from .models import ComparisonReport, RunResult
 from .simulator import evaluate_track_pass, stable_rng
 
 
-def compare_runs(candidate: RunResult, baseline: RunResult) -> ComparisonReport:
+def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | None = None) -> ComparisonReport:
     delta_metrics = _delta_metrics(candidate.metric_values, baseline.metric_values)
+    anchor_delta_metrics: dict[str, float] = {}
+    anchor_run_ids: list[str] = []
+    if anchor is not None:
+        anchor_delta_metrics = _delta_metrics(candidate.metric_values, anchor.metric_values)
+        anchor_run_ids = [anchor.run_id]
     parity_pct = _cost_parity_pct(candidate, baseline)
     equal_cost_pass = parity_pct <= 2.0
     fluency_drop_pct = baseline.metric_values["fluency"] - candidate.metric_values["fluency"]
@@ -43,6 +48,8 @@ def compare_runs(candidate: RunResult, baseline: RunResult) -> ComparisonReport:
         candidate_run_ids=[candidate.run_id],
         baseline_run_ids=[baseline.run_id],
         delta_metrics={k: round(v, 4) for k, v in delta_metrics.items()},
+        anchor_run_ids=anchor_run_ids,
+        anchor_delta_metrics={k: round(v, 4) for k, v in anchor_delta_metrics.items()},
         significance_tests=significance,
         pass_fail=pass_fail,
         candidate_stage=candidate.stage,
@@ -113,6 +120,6 @@ def _stage_gate_pass(
         return delta_composite >= 3.0 and stable_training and fluency_drop_pct <= 2.0
     if stage == 2:
         return delta_composite >= 5.0 and latency_overhead_pct <= 15.0
-    if stage == 3:
+    if stage in {3, 4}:
         return delta_composite >= 8.0 and ci_excludes_zero
     return False

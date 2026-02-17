@@ -1,0 +1,38 @@
+{
+  "id": "s1-anchor-baseline",
+  "track_id": "ANCHOR",
+  "stage": 1,
+  "hypothesis": "Permanent cross-stage reference engine used as anchor baseline for stable longitudinal comparisons.",
+  "model_variant": "BASELINE",
+  "baseline_id": "s1-anchor-baseline",
+  "train_budget_gpu_h": 120.0,
+  "infer_budget_gpu_h": 30.0,
+  "max_context": 128000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "needle_128k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite"
+  ],
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "promotion_gate": {
+    "mode": "anchor_reference"
+  },
+  "params": {
+    "anchor_reference": true
+  }
+}

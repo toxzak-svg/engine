@@ -6,7 +6,8 @@
     "0": {"budget_gpu_h": 300, "description": "baseline + harness contract freeze"},
     "1": {"budget_gpu_h": 900, "per_track_budget_gpu_h": 150, "description": "all six tracks proxy runs"},
     "2": {"budget_gpu_h": 1800, "per_track_budget_gpu_h": 600, "description": "top three scale-up"},
-    "3": {"budget_gpu_h": 2400, "per_track_budget_gpu_h": 1200, "description": "top two confirmatory runs"}
+    "3": {"budget_gpu_h": 2400, "per_track_budget_gpu_h": 1200, "description": "top two confirmatory runs"},
+    "4": {"budget_gpu_h": 900, "per_track_budget_gpu_h": 900, "description": "T3 confirmatory hardening run"}
   },
   "baseline_model": {
     "architecture": "decoder-only transformer",
@@ -29,6 +30,10 @@
     "long_context": 0.45,
     "reasoning": 0.35,
     "consistency": 0.2
+  },
+  "anchor_baseline": {
+    "id_pattern": "s{stage}-anchor-baseline",
+    "description": "Permanent cross-stage reference engine used for stable longitudinal comparisons."
   },
   "equal_cost_tolerance_pct": 2.0
 }

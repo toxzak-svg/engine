@@ -20,6 +20,12 @@ class SchemaValidationTests(unittest.TestCase):
         with self.assertRaises(SchemaValidationError):
             ExperimentSpec.from_dict(payload)
 
+    def test_anchor_experiment_spec_valid(self) -> None:
+        payload = read_yaml_or_json("specs/stage2/anchor_baseline.yaml")
+        spec = ExperimentSpec.from_dict(payload)
+        self.assertEqual(spec.track_id, "ANCHOR")
+        self.assertEqual(spec.model_variant, "BASELINE")
+
     def test_run_result_schema_valid(self) -> None:
         payload = {
             "run_id": "run-1",

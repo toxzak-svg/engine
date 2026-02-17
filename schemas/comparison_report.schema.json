@@ -35,6 +35,19 @@
         "type": "number"
       }
     },
+    "anchor_run_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "anchor_delta_metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
     "significance_tests": {
       "type": "object",
       "additionalProperties": true
@@ -46,7 +59,7 @@
     "candidate_stage": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 3
+      "maximum": 4
     },
     "track_id": {
       "type": "string",

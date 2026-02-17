@@ -19,10 +19,10 @@ def gate_stage(stage: int, reports: list[ComparisonReport]) -> dict[str, Any]:
         promotion_limit = 3
     elif stage == 2:
         promotion_limit = 2
-    elif stage == 3:
+    elif stage in {3, 4}:
         promotion_limit = len(qualified)
     else:
-        raise ValueError("stage must be one of 1, 2, 3")
+        raise ValueError("stage must be one of 1, 2, 3, 4")
 
     promoted = qualified[:promotion_limit]
     rejected = [report for report in stage_reports if report not in promoted]
@@ -55,9 +55,18 @@ def _thresholds_for_stage(stage: int) -> dict[str, Any]:
             "equal_cost_tolerance_pct": "<= 2.0",
             "promote_top_n": 2,
         }
+    if stage == 3:
+        return {
+            "delta_composite": ">= 8.0",
+            "bootstrap_ci_excludes_zero": True,
+            "equal_cost_tolerance_pct": "<= 2.0",
+            "promote_top_n": "all qualified",
+        }
     return {
         "delta_composite": ">= 8.0",
         "bootstrap_ci_excludes_zero": True,
+        "track_specific_pass_required": True,
+        "t3_focus": "token_access_reduction_pct >= 70 and miss_rate_increase <= 2",
         "equal_cost_tolerance_pct": "<= 2.0",
         "promote_top_n": "all qualified",
     }

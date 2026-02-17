@@ -1,0 +1,45 @@
+{
+  "id": "s4-t3-e1",
+  "track_id": "T3",
+  "stage": 4,
+  "hypothesis": "Compression-first hierarchical memory scales context while preserving task-critical details via uncertainty-aware zoom.",
+  "model_variant": "T3-E1",
+  "baseline_id": "s4-t3-baseline",
+  "train_budget_gpu_h": 700.0,
+  "infer_budget_gpu_h": 200.0,
+  "max_context": 1000000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "needle_128k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "token_access_reduction_pct",
+    "critical_fact_miss_rate"
+  ],
+  "seeds": [
+    401,
+    402,
+    403
+  ],
+  "promotion_gate": {
+    "next_stage": "portfolio-decision",
+    "delta_composite_min": 8.0,
+    "bootstrap_ci_excludes_zero": true,
+    "t3_token_access_reduction_pct_min": 70.0,
+    "t3_max_miss_rate_increase_abs": 2.0
+  },
+  "params": {
+    "compression_ratio": 0.7,
+    "zoom_uncertainty_threshold": 0.23
+  }
+}

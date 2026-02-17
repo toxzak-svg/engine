@@ -4,4 +4,5 @@ __pycache__/
 artifacts/runs/*.json
 artifacts/comparisons/*.json
 artifacts/memos/*.md
+artifacts/memos/*.json
 .pytest_cache/

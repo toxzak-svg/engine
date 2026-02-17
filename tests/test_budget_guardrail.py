@@ -31,6 +31,18 @@ class BudgetGuardrailTests(unittest.TestCase):
         report = compare_runs(inflated_candidate, baseline)
         self.assertFalse(report.pass_fail["equal_cost_pass"])
 
+    def test_anchor_delta_is_emitted_when_anchor_supplied(self) -> None:
+        candidate_spec = ExperimentSpec.from_dict(read_yaml_or_json("specs/stage1/t1_e2.yaml"))
+        baseline_spec = ExperimentSpec.from_dict(read_yaml_or_json("specs/stage1/t1_baseline.yaml"))
+        anchor_spec = ExperimentSpec.from_dict(read_yaml_or_json("specs/stage1/anchor_baseline.yaml"))
+        candidate = simulate_run(candidate_spec, seed=101, run_id="cand", commit_sha="abc")
+        baseline = simulate_run(baseline_spec, seed=101, run_id="base", commit_sha="abc")
+        anchor = simulate_run(anchor_spec, seed=101, run_id="anchor", commit_sha="abc")
+
+        report = compare_runs(candidate, baseline, anchor=anchor)
+        self.assertEqual(report.anchor_run_ids, ["anchor"])
+        self.assertIn("composite", report.anchor_delta_metrics)
+
 
 if __name__ == "__main__":
     unittest.main()

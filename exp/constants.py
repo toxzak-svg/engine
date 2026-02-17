@@ -13,14 +13,16 @@ STAGE_BUDGET_GPU_HOURS = {
     1: 150.0,
     2: 600.0,
     3: 1200.0,
+    4: 900.0,
 }
 
-TRACKS = ("T1", "T2", "T3", "T4", "T5", "T6")
+TRACKS = ("T1", "T2", "T3", "T4", "T5", "T6", "ANCHOR")
 
 SEED_POLICY = {
     1: 3,
     2: 2,
     3: 2,
+    4: 3,
 }
 
 BASE_BENCHMARK_SCORES = {
@@ -76,6 +78,7 @@ STAGE_GAIN_MULTIPLIER = {
     1: 1.2,
     2: 1.8,
     3: 2.4,
+    4: 2.8,
 }
 
 QUALITY_DELTA_SCALE = 2.0
@@ -105,6 +108,7 @@ TRACK_SPECIFIC_METRIC_BASELINES = {
         "contradiction_reduction_pct": 0.0,
         "constraint_pass_gain_pct": 0.0,
     },
+    "ANCHOR": {},
 }
 
 TRACK_PASS_CRITERIA = {
@@ -114,6 +118,7 @@ TRACK_PASS_CRITERIA = {
     "T4": "binding_error_reduction_pct >= 30 and reasoning_delta >= 4",
     "T5": "composite_delta >= 5 and invalid_plan_rate < 1 and latency_overhead <= 15",
     "T6": "contradiction_reduction_pct >= 25 and constraint_pass_gain_pct >= 10 and fluency_drop <= 2",
+    "ANCHOR": "not_applicable",
 }
 
 ENGINEERING_COMPLEXITY = {
@@ -123,4 +128,5 @@ ENGINEERING_COMPLEXITY = {
     "T4": "medium",
     "T5": "high",
     "T6": "medium_high",
+    "ANCHOR": "low",
 }

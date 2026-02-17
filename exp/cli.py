@@ -13,6 +13,7 @@ from .gating import gate_stage
 from .io import read_yaml_or_json
 from .memo import build_decision_memo
 from .models import ExperimentSpec
+from .reporting import load_comparison_reports, load_window_artifacts
 from .simulator import evaluate_track_pass, simulate_run
 from .store import (
     list_comparisons,
@@ -38,12 +39,21 @@ def main(argv: list[str] | None = None) -> int:
     compare_parser = subparsers.add_parser("compare", help="Compare candidate and baseline runs")
     compare_parser.add_argument("--candidate", required=True, help="Candidate run ID")
     compare_parser.add_argument("--baseline", required=True, help="Baseline run ID")
+    compare_parser.add_argument("--anchor", help="Optional anchor run ID for anchor-relative deltas")
 
     gate_parser = subparsers.add_parser("gate", help="Apply stage gates using comparison reports")
-    gate_parser.add_argument("--stage", required=True, type=int, choices=[1, 2, 3], help="Completed stage")
+    gate_parser.add_argument("--stage", required=True, type=int, choices=[1, 2, 3, 4], help="Completed stage")
+    gate_parser.add_argument(
+        "--marker",
+        help="Optional run-window marker path; when set, only comparison artifacts newer than marker are used.",
+    )
 
     memo_parser = subparsers.add_parser("memo", help="Generate a stage decision memo from comparison reports")
-    memo_parser.add_argument("--stage", required=True, type=int, choices=[1, 2, 3], help="Stage to summarize")
+    memo_parser.add_argument("--stage", required=True, type=int, choices=[1, 2, 3, 4], help="Stage to summarize")
+    memo_parser.add_argument(
+        "--marker",
+        help="Optional run-window marker path; when set, only comparison artifacts newer than marker are used.",
+    )
 
     args = parser.parse_args(argv)
 
@@ -123,12 +133,13 @@ def _cmd_eval(args: argparse.Namespace) -> int:
 def _cmd_compare(args: argparse.Namespace) -> int:
     candidate = load_run_result(args.candidate)
     baseline = load_run_result(args.baseline)
+    anchor = load_run_result(args.anchor) if args.anchor else None
     if candidate.track_id != baseline.track_id:
         raise ValueError(
             f"track mismatch: candidate track {candidate.track_id} vs baseline track {baseline.track_id}. "
             "Compare each track against its own baseline."
         )
-    report = compare_runs(candidate, baseline)
+    report = compare_runs(candidate, baseline, anchor=anchor)
     path = save_comparison(report)
     print(
         json.dumps(
@@ -136,7 +147,9 @@ def _cmd_compare(args: argparse.Namespace) -> int:
                 "comparison_path": str(path),
                 "candidate_run_id": candidate.run_id,
                 "baseline_run_id": baseline.run_id,
+                "anchor_run_id": anchor.run_id if anchor else None,
                 "delta_composite": report.delta_metrics.get("composite", 0.0),
+                "anchor_delta_composite": report.anchor_delta_metrics.get("composite", None),
                 "overall_pass": report.pass_fail.get("overall_pass", False),
                 "pass_fail": report.pass_fail,
                 "significance_tests": report.significance_tests,
@@ -148,14 +161,22 @@ def _cmd_compare(args: argparse.Namespace) -> int:
 
 
 def _cmd_gate(args: argparse.Namespace) -> int:
-    reports = list_comparisons()
+    if args.marker:
+        window = load_window_artifacts(args.marker)
+        reports = load_comparison_reports(window.comparison_files)
+    else:
+        reports = list_comparisons()
     summary = gate_stage(args.stage, reports)
     print(json.dumps(summary, indent=2))
     return 0
 
 
 def _cmd_memo(args: argparse.Namespace) -> int:
-    reports = list_comparisons()
+    if args.marker:
+        window = load_window_artifacts(args.marker)
+        reports = load_comparison_reports(window.comparison_files)
+    else:
+        reports = list_comparisons()
     memo = build_decision_memo(args.stage, reports)
     out_dir = Path("artifacts/memos")
     out_dir.mkdir(parents=True, exist_ok=True)

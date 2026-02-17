@@ -16,31 +16,35 @@ def build_decision_memo(stage: int, reports: list[ComparisonReport]) -> str:
     rows = []
     for track_id, group in grouped.items():
         comp_deltas = [item.delta_metrics.get("composite", 0.0) for item in group]
+        anchor_deltas = [item.anchor_delta_metrics.get("composite", item.delta_metrics.get("composite", 0.0)) for item in group]
         passes = [bool(item.pass_fail.get("overall_pass", False)) for item in group]
         ci_excludes_zero = [bool(item.significance_tests.get("ci95_excludes_zero", False)) for item in group]
         rows.append(
             {
                 "track_id": track_id,
-                "mean_delta": mean(comp_deltas) if comp_deltas else 0.0,
-                "best_delta": max(comp_deltas) if comp_deltas else 0.0,
+                "mean_delta_stage": mean(comp_deltas) if comp_deltas else 0.0,
+                "mean_delta_anchor": mean(anchor_deltas) if anchor_deltas else 0.0,
+                "best_delta_anchor": max(anchor_deltas) if anchor_deltas else 0.0,
                 "pass_rate": (sum(1 for item in passes if item) / len(passes)) if passes else 0.0,
                 "robustness_rate": (sum(1 for item in ci_excludes_zero if item) / len(ci_excludes_zero)) if ci_excludes_zero else 0.0,
                 "complexity": ENGINEERING_COMPLEXITY.get(track_id, "unknown"),
             }
         )
-    rows.sort(key=lambda row: (row["mean_delta"], row["pass_rate"], row["robustness_rate"]), reverse=True)
+    rows.sort(key=lambda row: (row["mean_delta_anchor"], row["pass_rate"], row["robustness_rate"]), reverse=True)
 
     lines = []
     lines.append(f"# Stage {stage} Decision Memo")
     lines.append("")
     lines.append("## Ranking")
     lines.append("")
-    lines.append("| Rank | Track | Mean Delta Composite | Best Delta | Pass Rate | Robustness | Engineering Complexity |")
-    lines.append("|---:|:---:|---:|---:|---:|---:|:---|")
+    lines.append(
+        "| Rank | Track | Mean Delta vs Anchor | Best Delta vs Anchor | Mean Delta vs Stage Baseline | Pass Rate | Robustness | Engineering Complexity |"
+    )
+    lines.append("|---:|:---:|---:|---:|---:|---:|---:|:---|")
     for idx, row in enumerate(rows, start=1):
         lines.append(
-            f"| {idx} | {row['track_id']} | {row['mean_delta']:.3f} | {row['best_delta']:.3f} | "
-            f"{row['pass_rate']*100:.1f}% | {row['robustness_rate']*100:.1f}% | {row['complexity']} |"
+            f"| {idx} | {row['track_id']} | {row['mean_delta_anchor']:.3f} | {row['best_delta_anchor']:.3f} | "
+            f"{row['mean_delta_stage']:.3f} | {row['pass_rate']*100:.1f}% | {row['robustness_rate']*100:.1f}% | {row['complexity']} |"
         )
 
     lines.append("")
@@ -50,7 +54,7 @@ def build_decision_memo(stage: int, reports: list[ComparisonReport]) -> str:
     else:
         top = rows[0]
         lines.append(
-            f"Prioritize `{top['track_id']}` first based on strongest composite effect size and current gate performance."
+            f"Prioritize `{top['track_id']}` first based on strongest anchor-relative composite gains and current gate performance."
         )
     lines.append("")
     return "\n".join(lines)

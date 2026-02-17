@@ -49,8 +49,8 @@ class ExperimentSpec:
     def validate_policy(self) -> None:
         if self.track_id not in TRACKS:
             raise SchemaValidationError(f"Unknown track_id {self.track_id}. Expected one of {TRACKS}.")
-        if self.stage not in {0, 1, 2, 3}:
-            raise SchemaValidationError(f"Invalid stage {self.stage}. Expected 0/1/2/3.")
+        if self.stage not in {0, 1, 2, 3, 4}:
+            raise SchemaValidationError(f"Invalid stage {self.stage}. Expected 0/1/2/3/4.")
         if self.stage in SEED_POLICY and len(self.seeds) < SEED_POLICY[self.stage]:
             raise SchemaValidationError(
                 f"Stage {self.stage} requires at least {SEED_POLICY[self.stage]} seeds, got {len(self.seeds)}."
@@ -122,6 +122,8 @@ class ComparisonReport:
     pass_fail: dict[str, Any]
     candidate_stage: int
     track_id: str
+    anchor_run_ids: list[str] = field(default_factory=list)
+    anchor_delta_metrics: dict[str, float] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "ComparisonReport":
@@ -134,6 +136,8 @@ class ComparisonReport:
             pass_fail=dict(payload["pass_fail"]),
             candidate_stage=int(payload["candidate_stage"]),
             track_id=payload["track_id"],
+            anchor_run_ids=list(payload.get("anchor_run_ids", [])),
+            anchor_delta_metrics={k: float(v) for k, v in payload.get("anchor_delta_metrics", {}).items()},
         )
 
     def to_dict(self) -> dict[str, Any]:

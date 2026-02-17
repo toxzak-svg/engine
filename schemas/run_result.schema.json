@@ -71,12 +71,12 @@
     },
     "track_id": {
       "type": "string",
-      "enum": ["T1", "T2", "T3", "T4", "T5", "T6"]
+      "enum": ["T1", "T2", "T3", "T4", "T5", "T6", "ANCHOR"]
     },
     "stage": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 3
+      "maximum": 4
     },
     "model_variant": {
       "type": "string",
