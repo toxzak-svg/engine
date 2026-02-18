@@ -1,0 +1,56 @@
+{
+  "candidate_run_ids": [
+    "batch-s3-t3-e3-301-0f6ff0"
+  ],
+  "baseline_run_ids": [
+    "batch-s3-t3-baseline-301-1e5e82"
+  ],
+  "delta_metrics": {
+    "composite": 8.1166,
+    "consistency": 2.8503,
+    "consistency_component": 2.8503,
+    "critical_fact_miss_rate": 0.3,
+    "fluency": -0.4456,
+    "long_context": 12.6718,
+    "long_context_component": 12.6718,
+    "reasoning": 5.2693,
+    "reasoning_component": 5.2693,
+    "token_access_reduction_pct": 15.0
+  },
+  "significance_tests": {
+    "method": "bootstrap_mean_delta",
+    "n_resamples": 2000,
+    "ci95": [
+      4.395,
+      11.2535
+    ],
+    "ci95_excludes_zero": true,
+    "mean_delta": 7.9538,
+    "benchmark_count": 8
+  },
+  "pass_fail": {
+    "equal_cost_pass": true,
+    "cost_parity_pct": 0.2159,
+    "stable_training": true,
+    "fluency_drop_pct": 0.4456,
+    "latency_overhead_pct": -9.9173,
+    "stage_gate_pass": true,
+    "track_specific_pass": true,
+    "overall_pass": true
+  },
+  "candidate_stage": 3,
+  "track_id": "T3",
+  "anchor_run_ids": [
+    "batch-s3-anchor-baseline-302-48863a"
+  ],
+  "anchor_delta_metrics": {
+    "composite": 8.0636,
+    "consistency": 3.0518,
+    "consistency_component": 3.0518,
+    "fluency": -0.5226,
+    "long_context": 12.6644,
+    "long_context_component": 12.6644,
+    "reasoning": 5.0122,
+    "reasoning_component": 5.0122
+  }
+}

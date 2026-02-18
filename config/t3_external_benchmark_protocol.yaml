@@ -1,0 +1,128 @@
+{
+  "protocol_name": "t3_external_engine_head_to_head",
+  "version": "1.0.0",
+  "owner": "unassigned",
+  "status": "draft_ready_for_execution",
+  "purpose": "Fairly determine whether T3 outperforms current external engines under matched constraints.",
+  "claim_scope": {
+    "allowed_now": "promising architecture signal under equal-cost internal harness",
+    "not_allowed_now": "state-of-the-art vs market",
+    "claim_unlocked_when": "all protocol decision rules pass"
+  },
+  "comparators": [
+    {"slot": "ext_1", "provider": "OpenAI", "model_id": "TBD"},
+    {"slot": "ext_2", "provider": "Anthropic", "model_id": "TBD"},
+    {"slot": "ext_3", "provider": "Google", "model_id": "TBD"},
+    {"slot": "ext_4", "provider": "OpenSourceLeader", "model_id": "TBD"}
+  ],
+  "task_matrix": {
+    "domains": [
+      "long_context_retrieval",
+      "multi_hop_reasoning",
+      "consistency_under_contradiction",
+      "agentic_planning"
+    ],
+    "context_length_bands_tokens": [32000, 64000, 128000],
+    "min_items_per_domain_per_band": 120,
+    "holdout_required": true,
+    "blinded_eval_required": true,
+    "prompt_pack_version": "t3-ext-v1",
+    "dataset_snapshot_hash": "TBD"
+  },
+  "fairness_constraints": {
+    "same_prompt_text_for_all_models": true,
+    "same_context_payload_for_all_models": true,
+    "same_scoring_rubric_for_all_models": true,
+    "cost_controls": {
+      "equal_cost_tolerance_pct": 2.0,
+      "max_cost_per_request_usd": "TBD",
+      "max_cost_per_success_usd": "TBD"
+    },
+    "latency_controls": {
+      "target_latency_p95_ms": "TBD",
+      "max_latency_regression_pct_vs_baseline": 15.0
+    },
+    "sampling_controls": {
+      "temperature": "matched where supported",
+      "top_p": "matched where supported",
+      "max_output_tokens": "fixed per task family",
+      "num_retries": 0
+    }
+  },
+  "rubric": {
+    "primary_metrics": [
+      "composite_success_score",
+      "task_success_rate",
+      "latency_p95_ms",
+      "cost_per_success_usd",
+      "critical_failure_rate"
+    ],
+    "composite_weights": {
+      "long_context": 0.45,
+      "reasoning": 0.35,
+      "consistency": 0.20
+    },
+    "grading": {
+      "auto_grader": "deterministic rubric scripts",
+      "human_review_fraction_pct": 20,
+      "human_raters_min": 3,
+      "blinded_rater_assignment": true
+    }
+  },
+  "statistics": {
+    "confidence_level": 0.95,
+    "bootstrap_resamples": 10000,
+    "paired_analysis": true,
+    "multiple_comparison_correction": "holm_bonferroni",
+    "report": [
+      "point_estimates",
+      "effect_sizes",
+      "confidence_intervals",
+      "p_values_adjusted"
+    ]
+  },
+  "production_ab": {
+    "required": true,
+    "randomization_unit": "request_or_session",
+    "min_sample_size": {
+      "requests_per_arm": 10000,
+      "min_runtime_days": 14
+    },
+    "primary_online_metrics": [
+      "user_success_rate",
+      "latency_p95_ms",
+      "cost_per_request_usd",
+      "failure_rate"
+    ],
+    "guardrails": {
+      "max_failure_rate_regression_pct": 5.0,
+      "max_latency_regression_pct": 10.0,
+      "max_cost_regression_pct": 5.0
+    }
+  },
+  "decision_rules": {
+    "external_competitiveness_claim_allowed_if": [
+      "T3 wins composite_success_score versus every comparator with CI lower bound > 0",
+      "T3 is non-inferior on latency_p95_ms within configured guardrail",
+      "T3 is non-inferior on cost_per_request_usd within configured guardrail",
+      "T3 has no guardrail breach in critical_failure_rate",
+      "Production A/B confirms offline directionality"
+    ],
+    "fallback_if_failed": "limit claim to internal harness advantage only; no market SOTA claim"
+  },
+  "required_artifacts": [
+    "artifacts/memos/t3_go_no_go_validation_checklist.md",
+    "artifacts/memos/consolidated_final_ranking.md",
+    "artifacts/memos/t3_external_head_to_head_results.md",
+    "artifacts/memos/t3_external_production_ab_report.md",
+    "artifacts/memos/t3_external_claim_decision.md",
+    "artifacts/memos/t3_external_run_manifest.json"
+  ],
+  "preflight_checklist": [
+    "Fill comparator model IDs and pricing metadata",
+    "Freeze prompt pack and dataset snapshot hash",
+    "Freeze rubric version and grader code commit",
+    "Verify budget and latency ceilings are enforceable per request",
+    "Register decision rules before running benchmarks"
+  ]
+}
