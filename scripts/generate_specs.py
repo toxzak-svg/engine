@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from exp.spec_utils import build_spec_template
+
 
 TRACK_HYPOTHESES = {
     "T1": "Hybrid photonic-digital acceleration enables longer effective context and ensemble gains at equal cost.",
@@ -264,67 +266,73 @@ DATASETS = ["needle_32k", "needle_64k", "needle_128k", "longbench", "gsm8k", "bb
 
 def build_spec(track_id: str, stage: int, variant: str, baseline_id: str, params: dict) -> dict:
     settings = STAGE_SETTINGS[stage]
-    return {
-        "id": f"s{stage}-{track_id.lower()}-{variant.lower()}",
-        "track_id": track_id,
-        "stage": stage,
-        "hypothesis": TRACK_HYPOTHESES[track_id],
-        "model_variant": f"{track_id}-{variant}" if variant != "BASELINE" else "BASELINE",
-        "baseline_id": baseline_id,
-        "train_budget_gpu_h": settings["train_budget_gpu_h"],
-        "infer_budget_gpu_h": settings["infer_budget_gpu_h"],
-        "max_context": settings["max_context"],
-        "datasets": DATASETS,
-        "metrics": TRACK_METRICS[track_id],
-        "seeds": settings["seeds"],
-        "promotion_gate": settings["promotion_gate"],
-        "params": params,
-    }
+    return build_spec_template(
+        base_spec={
+            "id": f"s{stage}-{track_id.lower()}-{variant.lower()}",
+            "track_id": track_id,
+            "stage": stage,
+            "hypothesis": TRACK_HYPOTHESES[track_id],
+            "model_variant": f"{track_id}-{variant}" if variant != "BASELINE" else "BASELINE",
+            "baseline_id": baseline_id,
+            "train_budget_gpu_h": settings["train_budget_gpu_h"],
+            "infer_budget_gpu_h": settings["infer_budget_gpu_h"],
+            "max_context": settings["max_context"],
+            "datasets": DATASETS,
+            "metrics": TRACK_METRICS[track_id],
+            "seeds": settings["seeds"],
+            "promotion_gate": settings["promotion_gate"],
+        },
+        params=params,
+    )
 
 
 def build_anchor_spec(stage: int) -> dict:
     settings = STAGE_SETTINGS[stage]
-    return {
-        "id": f"s{stage}-anchor-baseline",
-        "track_id": "ANCHOR",
-        "stage": stage,
-        "hypothesis": ANCHOR_HYPOTHESIS,
-        "model_variant": "BASELINE",
-        "baseline_id": f"s{stage}-anchor-baseline",
-        "train_budget_gpu_h": settings["train_budget_gpu_h"],
-        "infer_budget_gpu_h": settings["infer_budget_gpu_h"],
-        "max_context": settings["max_context"],
-        "datasets": DATASETS,
-        "metrics": ANCHOR_METRICS,
-        "seeds": settings["seeds"],
-        "promotion_gate": {"mode": "anchor_reference"},
-        "params": {"anchor_reference": True},
-    }
+    return build_spec_template(
+        base_spec={
+            "id": f"s{stage}-anchor-baseline",
+            "track_id": "ANCHOR",
+            "stage": stage,
+            "hypothesis": ANCHOR_HYPOTHESIS,
+            "model_variant": "BASELINE",
+            "baseline_id": f"s{stage}-anchor-baseline",
+            "train_budget_gpu_h": settings["train_budget_gpu_h"],
+            "infer_budget_gpu_h": settings["infer_budget_gpu_h"],
+            "max_context": settings["max_context"],
+            "datasets": DATASETS,
+            "metrics": ANCHOR_METRICS,
+            "seeds": settings["seeds"],
+            "promotion_gate": {"mode": "anchor_reference"},
+        },
+        params={"anchor_reference": True},
+    )
 
 
 def build_recovery_spec(item: dict) -> dict:
     stage = int(item["stage"])
     track_id = item["track_id"]
-    return {
-        "id": item["id"],
-        "track_id": track_id,
-        "stage": stage,
-        "hypothesis": TRACK_HYPOTHESES[track_id],
-        "model_variant": item["model_variant"],
-        "baseline_id": f"s{stage}-{track_id.lower()}-baseline",
-        "train_budget_gpu_h": item["train_budget_gpu_h"],
-        "infer_budget_gpu_h": item["infer_budget_gpu_h"],
-        "max_context": item["max_context"],
-        "datasets": DATASETS,
-        "metrics": TRACK_METRICS[track_id],
-        "seeds": item["seeds"],
-        "promotion_gate": {
-            "mode": "recovery",
-            "target_overall_pass_rate_gt": 0.0,
-            "track_specific_pass_required": True,
+    return build_spec_template(
+        base_spec={
+            "id": item["id"],
+            "track_id": track_id,
+            "stage": stage,
+            "hypothesis": TRACK_HYPOTHESES[track_id],
+            "model_variant": item["model_variant"],
+            "baseline_id": f"s{stage}-{track_id.lower()}-baseline",
+            "train_budget_gpu_h": item["train_budget_gpu_h"],
+            "infer_budget_gpu_h": item["infer_budget_gpu_h"],
+            "max_context": item["max_context"],
+            "datasets": DATASETS,
+            "metrics": TRACK_METRICS[track_id],
+            "seeds": item["seeds"],
+            "promotion_gate": {
+                "mode": "recovery",
+                "target_overall_pass_rate_gt": 0.0,
+                "track_specific_pass_required": True,
+            },
         },
-        "params": dict(item["params"]),
-    }
+        params=dict(item["params"]),
+    )
 
 
 def write_spec(path: Path, payload: dict) -> None:

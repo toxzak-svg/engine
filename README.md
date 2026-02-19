@@ -30,6 +30,34 @@ Artifacts are written to:
 - `artifacts/comparisons/*.json`
 - `artifacts/memos/*.md`
 
+## Additional CLI Commands
+
+In addition to the commands listed above, the following commands are also available:
+
+- **Generate experiment specifications**:
+  ```bash
+  exp generate --stage <stage_number> --type <main|recovery>
+  ```
+  Generate experiment specifications for a specific stage. Use the `--type` flag to specify the type of specs to generate (default: `main`).
+
+- **Package the project for PyPI publishing**:
+  ```bash
+  exp package --version <version_number> --output <output_directory>
+  ```
+  Package the project for publishing to PyPI. Specify the version number and optionally the output directory (default: `dist/`).
+
+- **Run the test suite**:
+  ```bash
+  exp test --ci
+  ```
+  Run the test suite. Use the `--ci` flag to run tests in CI mode.
+
+- **Publish the package to PyPI**:
+  ```bash
+  exp publish --repository <repository_name>
+  ```
+  Publish the package to a PyPI repository (default: `pypi`).
+
 ## Spec Catalog
 
 Generate or refresh all stage/track specs:
@@ -85,3 +113,92 @@ Final ordering uses a pass-adjusted decision score and excludes recovery sweeps 
   - Stage 2 -> 3: `delta_composite >= 5`, latency overhead <= 15%
   - Stage 3 final: `delta_composite >= 8`, bootstrap CI excludes 0
   - Stage 4 (T3 confirmatory): `delta_composite >= 8`, bootstrap CI excludes 0, T3-specific pass required
+
+### Additional Details
+
+- **SEED_POLICY**: Defines the minimum number of seeds required for each stage. For example:
+  - Stage 1: Minimum 3 seeds
+  - Stage 2: Minimum 5 seeds
+  - Stage 3: Minimum 8 seeds
+
+- **STAGE_BUDGET_GPU_HOURS**: Specifies the maximum GPU hours allowed per stage. Each stage has a predefined budget to ensure fair comparisons.
+
+## Schema Validation
+
+The Engine Experiment Harness uses schema validation to ensure that experiment specifications and results conform to defined standards. The following schemas are used:
+
+- **`experiment_spec`**: Validates the structure and content of experiment specifications.
+- **`run_result`**: Ensures that run results are correctly formatted and include all required fields.
+- **`comparison_report`**: Validates the structure of comparison reports.
+
+These schemas are located in the `schemas/` directory and are loaded and validated using the `validate_schema` and `load_schema` functions in the codebase.
+
+## Stage-Gated Experimentation
+
+The stage-gated experimentation process is implemented to ensure a structured and fair evaluation of experimental tracks. The following functions are used to manage tracks and stages:
+
+- **Track Discovery**: The `_discover_tracks` function in `scripts/run_stage.py` identifies all tracks for a given stage by scanning the `specs/stageX/` directory for baseline YAML files.
+- **Track Overrides**: The `_parse_track_overrides` function in `scripts/run_stage.py` allows for specifying custom tracks to override the default selection.
+
+This process ensures that only the most promising tracks are promoted to the next stage based on the defined gating criteria.
+
+## Overview
+
+The Engine Experiment Harness is a modular and reusable framework for running and managing stage-gated, equal-cost experiment programs. It is designed to facilitate experimentation across multiple model-engine tracks, providing tools for running experiments, evaluating results, and generating reports. The framework is built with modularity and reusability in mind, making it easy to extend and adapt for new experiments.
+
+## Features
+
+- **Stage-Gated Experimentation**: Supports multi-stage experiments with clear gating criteria.
+- **Equal-Cost Comparisons**: Ensures fair comparisons between experimental and baseline models.
+- **Modular Design**: Easily extendable to support new experiment tracks and stages.
+- **Comprehensive CLI**: Simplifies running experiments, evaluations, comparisons, and report generation.
+- **Schema Validation**: Ensures experiment specifications and results conform to defined schemas.
+- **Artifact Management**: Automatically organizes and stores experiment artifacts, comparisons, and memos.
+
+## Installation
+
+To install the Engine Experiment Harness, clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/toxzak-svg/engine.git
+cd engine
+pip install -e .
+```
+
+## Usage
+
+The CLI provides the following commands for managing experiments:
+
+- **Run an experiment**:
+  ```bash
+  exp run --spec <path_to_spec_file>
+  ```
+- **Evaluate a run**:
+  ```bash
+  exp eval --run <run_id>
+  ```
+- **Compare results**:
+  ```bash
+  exp compare --candidate <run_id> --baseline <run_id>
+  ```
+- **Gate experiments**:
+  ```bash
+  exp gate --stage <stage_number>
+  ```
+- **Generate memos**:
+  ```bash
+  exp memo --stage <stage_number>
+  ```
+
+## Contributing
+
+We welcome contributions to the Engine Experiment Harness! To contribute:
+
+1. Fork the repository and create a new branch for your feature or bugfix.
+2. Write clear and concise code, following the existing style and conventions.
+3. Add tests for your changes in the `tests/` directory.
+4. Submit a pull request with a detailed description of your changes.
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.

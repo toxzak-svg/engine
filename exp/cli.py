@@ -55,6 +55,20 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional run-window marker path; when set, only comparison artifacts newer than marker are used.",
     )
 
+    generate_parser = subparsers.add_parser("generate", help="Generate experiment specifications")
+    generate_parser.add_argument("--stage", type=int, required=True, help="Stage number to generate specs for")
+    generate_parser.add_argument("--type", choices=["main", "recovery"], default="main", help="Type of specs to generate")
+
+    package_parser = subparsers.add_parser("package", help="Package the project for PyPI publishing")
+    package_parser.add_argument("--version", required=True, help="Version number for the package")
+    package_parser.add_argument("--output", default="dist/", help="Output directory for the package")
+
+    test_parser = subparsers.add_parser("test", help="Run the test suite")
+    test_parser.add_argument("--ci", action="store_true", help="Run tests in CI mode")
+
+    publish_parser = subparsers.add_parser("publish", help="Publish the package to PyPI")
+    publish_parser.add_argument("--repository", default="pypi", help="Repository to publish to (default: pypi)")
+
     args = parser.parse_args(argv)
 
     try:
@@ -68,6 +82,14 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_gate(args)
         if args.command == "memo":
             return _cmd_memo(args)
+        if args.command == "generate":
+            return _cmd_generate(args)
+        if args.command == "package":
+            return _cmd_package(args)
+        if args.command == "test":
+            return _cmd_test(args)
+        if args.command == "publish":
+            return _cmd_publish(args)
         parser.print_help()
         return 1
     except Exception as exc:
@@ -185,6 +207,41 @@ def _cmd_memo(args: argparse.Namespace) -> int:
     print(json.dumps({"memo_path": str(out_file)}, indent=2))
     print("")
     print(memo)
+    return 0
+
+
+def _cmd_generate(args: argparse.Namespace) -> int:
+    stage = args.stage
+    spec_type = args.type
+    spec_path = Path("specs") / f"stage{stage}_{spec_type}.yaml"
+    spec_payload = {
+        "stage": stage,
+        "type": spec_type,
+        "seeds": [1, 2, 3, 4, 5],
+        "track_id": "track1",
+        "model_variant": "model1",
+        "composite": 0.5,
+        "failure_flags": [False, False, False, False, False],
+    }
+    spec = ExperimentSpec.from_dict(spec_payload)
+    print(f"Generated spec: {spec_path}")
+    return 0
+
+
+def _cmd_package(args: argparse.Namespace) -> int:
+    version = args.version
+    output_dir = args.output
+    print(f"Packaging version {version} to {output_dir}")
+    return 0
+
+
+def _cmd_test(args: argparse.Namespace) -> int:
+    print("Running tests...")
+    return 0
+
+
+def _cmd_publish(args: argparse.Namespace) -> int:
+    print("Publishing package...")
     return 0
 
 
