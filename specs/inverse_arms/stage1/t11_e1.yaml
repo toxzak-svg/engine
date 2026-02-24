@@ -1,0 +1,45 @@
+{
+  "id": "s1-t11-e1",
+  "track_id": "T11",
+  "stage": 1,
+  "hypothesis": "Noise-Injection Ensemble - Inject controlled noise and vote on constraint satisfaction to improve instruction following.",
+  "model_variant": "INV-E-E1",
+  "baseline_id": "s1-t11-baseline",
+  "train_budget_gpu_h": 100.0,
+  "infer_budget_gpu_h": 50.0,
+  "max_context": 64000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "constraint_adherence_score",
+    "instruction_following_rate",
+    "sample_variance",
+    "voting_agreement_rate"
+  ],
+  "seeds": [101, 102, 103],
+  "promotion_gate": {
+    "next_stage": 2,
+    "delta_composite_min": 1.5,
+    "stable_training_required": true,
+    "constraint_adherence_min_delta": 3.0,
+    "instruction_following_min_delta": 2.0
+  },
+  "params": {
+    "ensemble_samples": 3,
+    "temperature_schedule": [0.2, 0.5, 0.7],
+    "prompt_perturbation_types": ["synonym_swap", "constraint_reorder"],
+    "vote_on": "constraint_satisfaction",
+    "select_best_constraint_satisfier": true
+  }
+}

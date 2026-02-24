@@ -17,6 +17,7 @@ from .constants import (
     VARIANT_EFFECTS,
 )
 from .models import ExperimentSpec, RunResult
+from exp.shared import clamp_score, simulate_benchmarks
 
 
 def stable_rng(*parts: object) -> random.Random:
@@ -24,10 +25,6 @@ def stable_rng(*parts: object) -> random.Random:
     digest = hashlib.sha256(key.encode("utf-8")).digest()
     seed = int.from_bytes(digest[:8], byteorder="big", signed=False)
     return random.Random(seed)
-
-
-def clamp_score(value: float, lower: float = 0.0, upper: float = 100.0) -> float:
-    return max(lower, min(upper, value))
 
 
 def compute_composite(long_context: float, reasoning: float, consistency: float) -> float:
@@ -40,12 +37,18 @@ def compute_composite(long_context: float, reasoning: float, consistency: float)
 
 def simulate_run(spec: ExperimentSpec, seed: int, run_id: str, commit_sha: str) -> RunResult:
     rng = stable_rng(spec.id, spec.model_variant, seed, spec.stage)
-    effect = VARIANT_EFFECTS.get(spec.model_variant)
+
+    # Handle new arms and bundles
+    if spec.model_variant in ["bundle1", "bundle2"]:
+        effect = _combine_bundle_effects(spec.model_variant)
+    else:
+        effect = VARIANT_EFFECTS.get(spec.model_variant)
+
     if effect is None:
         raise ValueError(f"Unknown model_variant {spec.model_variant}")
 
     stage_multiplier = STAGE_GAIN_MULTIPLIER.get(spec.stage, 1.0)
-    benchmark_scores = _simulate_benchmarks(spec, effect, stage_multiplier, rng)
+    benchmark_scores = simulate_benchmarks(spec, effect, stage_multiplier, rng)
 
     long_context = mean([benchmark_scores[name] for name in LONG_CONTEXT_DATASETS])
     reasoning = mean([benchmark_scores[name] for name in REASONING_DATASETS])
@@ -65,12 +68,20 @@ def simulate_run(spec: ExperimentSpec, seed: int, run_id: str, commit_sha: str) 
     baseline_energy = (train_cost + infer_cost) * 0.38
     energy_kwh = baseline_energy * (1.0 + (effect.energy_delta_pct / 100.0) * stage_multiplier)
 
+    # Add new metrics
+    verbosity_penalty = _calculate_verbosity_penalty(benchmark_scores)
+    robustness_delta = _calculate_robustness_delta(benchmark_scores)
+    constraint_adherence_score = _calculate_constraint_adherence_score(benchmark_scores)
+
     metric_values = {
         "long_context": round(long_context, 4),
         "reasoning": round(reasoning, 4),
         "consistency": round(consistency, 4),
         "fluency": round(fluency, 4),
         "composite": round(composite, 4),
+        "verbosity_penalty": round(verbosity_penalty, 4),
+        "robustness_delta": round(robustness_delta, 4),
+        "constraint_adherence": round(constraint_adherence_score, 4),
     }
     metric_values.update(_track_specific_metrics(spec, effect, stage_multiplier, long_context, reasoning, consistency))
 
@@ -99,45 +110,39 @@ def simulate_run(spec: ExperimentSpec, seed: int, run_id: str, commit_sha: str) 
         metadata={"params": spec.params},
     )
 
+# Helper functions for new metrics and bundles
 
-def _simulate_benchmarks(spec: ExperimentSpec, effect: Any, stage_multiplier: float, rng: random.Random) -> dict[str, float]:
-    scores = dict(BASE_BENCHMARK_SCORES)
-    long_delta = effect.long_context_delta * stage_multiplier * QUALITY_DELTA_SCALE
-    reasoning_delta = effect.reasoning_delta * stage_multiplier * QUALITY_DELTA_SCALE
-    consistency_delta = effect.consistency_delta * stage_multiplier * QUALITY_DELTA_SCALE
-    fluency_delta = effect.fluency_delta * stage_multiplier
+def _combine_bundle_effects(bundle: str) -> Any:
+    """Combine effects for experiment bundles."""
+    if bundle == "bundle1":
+        return _combine_effects(["INV-A-E1", "INV-F-E1"])
+    elif bundle == "bundle2":
+        return _combine_effects(["INV-B-E1", "INV-D-E1"])
+    raise ValueError(f"Unknown bundle {bundle}")
 
-    long_distribution = {
-        "needle_32k": 0.20,
-        "needle_64k": 0.25,
-        "needle_128k": 0.35,
-        "longbench": 0.20,
-    }
 
-    for dataset, weight in long_distribution.items():
-        jitter = rng.uniform(-0.3, 0.3)
-        scores[dataset] = clamp_score(scores[dataset] + long_delta * (0.7 + weight) + jitter)
+def _combine_effects(arm_ids: list[str]) -> Any:
+    """Combine effects from multiple arms."""
+    combined_effect = VARIANT_EFFECTS[arm_ids[0]]
+    for arm_id in arm_ids[1:]:
+        arm_effect = VARIANT_EFFECTS[arm_id]
+        combined_effect = combined_effect.combine(arm_effect)  # Assuming a combine method exists
+    return combined_effect
 
-    for dataset in REASONING_DATASETS:
-        jitter = rng.uniform(-0.2, 0.2)
-        scores[dataset] = clamp_score(scores[dataset] + reasoning_delta + jitter)
 
-    for dataset in CONSISTENCY_DATASETS:
-        jitter = rng.uniform(-0.2, 0.2)
-        scores[dataset] = clamp_score(scores[dataset] + consistency_delta + jitter)
+def _calculate_verbosity_penalty(benchmark_scores: dict[str, float]) -> float:
+    """Calculate verbosity penalty."""
+    return benchmark_scores.get("verbosity_penalty", 0.0)
 
-    scores["fluency"] = clamp_score(scores["fluency"] + fluency_delta + rng.uniform(-0.1, 0.1))
 
-    if spec.track_id == "T3":
-        compression_strength = float(spec.params.get("compression_ratio", 0.7))
-        penalty = max(0.0, compression_strength - 0.8) * 15.0
-        scores["consistency_longform"] = clamp_score(scores["consistency_longform"] - penalty)
-    if spec.track_id == "T6":
-        anneal_temp = float(spec.params.get("anneal_temp", 0.55))
-        if anneal_temp < 0.2:
-            scores["fluency"] = clamp_score(scores["fluency"] - 5.0)
+def _calculate_robustness_delta(benchmark_scores: dict[str, float]) -> float:
+    """Calculate robustness delta."""
+    return benchmark_scores.get("robustness_delta", 0.0)
 
-    return scores
+
+def _calculate_constraint_adherence_score(benchmark_scores: dict[str, float]) -> float:
+    """Calculate constraint adherence score."""
+    return benchmark_scores.get("constraint_adherence", 0.0)
 
 
 def _adjust_infer_cost_for_params(spec: ExperimentSpec, infer_cost: float) -> float:

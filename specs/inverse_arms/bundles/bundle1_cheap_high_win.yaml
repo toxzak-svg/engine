@@ -1,0 +1,39 @@
+{
+  "id": "bundle-1-cheap-high-win",
+  "name": "Bundle 1 (cheap, high chance of win)",
+  "description": "Deliberation Collapse + Latent Plan Swapping - improve accuracy-per-token and reduce variance",
+  "arms": [
+    {
+      "track_id": "T7",
+      "spec_id": "s1-t7-e1",
+      "model_variant": "INV-A-E1",
+      "hypothesis": "Deliberation Collapse - Force single-pass generation with answer-shaping postpass"
+    },
+    {
+      "track_id": "T12",
+      "spec_id": "s1-t12-e1",
+      "model_variant": "INV-F-E1",
+      "hypothesis": "Latent Plan Swapping - Generate multiple micro-plans, execute only one"
+    }
+  ],
+  "goal": "Improve accuracy-per-token and reduce variance",
+  "expected_cost_multiplier": 1.1,
+  "risk_level": "low",
+  "evaluation_metrics": [
+    "accuracy_per_token",
+    "variance_reduction_pct",
+    "ci_width",
+    "hallucination_surface_rate"
+  ],
+  "success_criteria": {
+    "accuracy_per_token_min_delta": 0.02,
+    "variance_reduction_min": 3.0,
+    "ci_width_reduction": true,
+    "no_fluency_regression": true
+  },
+  "failure_mode_targets": [
+    "overthinking",
+    "high_variance",
+    "plan_instability"
+  ]
+}

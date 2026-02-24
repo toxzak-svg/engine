@@ -1,0 +1,45 @@
+{
+  "id": "s1-t7-e1",
+  "track_id": "T7",
+  "stage": 1,
+  "hypothesis": "Deliberation Collapse - Force single-pass generation with answer-shaping postpass to reduce hallucination surfaces and improve accuracy per token.",
+  "model_variant": "INV-A-E1",
+  "baseline_id": "s1-t7-baseline",
+  "train_budget_gpu_h": 100.0,
+  "infer_budget_gpu_h": 50.0,
+  "max_context": 64000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "verbosity_penalty",
+    "accuracy_per_token",
+    "hallucination_surface_rate"
+  ],
+  "seeds": [101, 102, 103],
+  "promotion_gate": {
+    "next_stage": 2,
+    "delta_composite_min": 2.0,
+    "stable_training_required": true,
+    "max_fluency_drop_pct": 1.0,
+    "accuracy_per_token_min_delta": 0.02,
+    "hallucination_reduction_required": true
+  },
+  "params": {
+    "postpass_tokens": 48,
+    "disable_scratchpad": true,
+    "disable_self_consistency": true,
+    "disable_long_reasoning": true,
+    "postpass_fix_contradictions": true
+  }
+}

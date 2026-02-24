@@ -1,0 +1,43 @@
+{
+  "id": "bundle-2-risky-massive-upside",
+  "name": "Bundle 2 (risky, potentially massive upside)",
+  "description": "Counterfactual Self-Audit + Proof-Carrying Outputs - crush critical misses + increase robustness",
+  "arms": [
+    {
+      "track_id": "T8",
+      "spec_id": "s1-t8-e1",
+      "model_variant": "INV-B-E1",
+      "hypothesis": "Counterfactual Self-Audit - Generate K counterfactual variants, select most robust answer"
+    },
+    {
+      "track_id": "T10",
+      "spec_id": "s1-t10-e1",
+      "model_variant": "INV-D-E1",
+      "hypothesis": "Proof-Carrying Outputs - Require compact certificate for each response"
+    }
+  ],
+  "goal": "Crush critical misses + increase robustness even if pass rate stays flat",
+  "expected_cost_multiplier": 1.25,
+  "risk_level": "high",
+  "evaluation_metrics": [
+    "catastrophic_miss_rate",
+    "robustness_delta",
+    "assumption_error_rate",
+    "certificate_pass_rate",
+    "abstention_rate"
+  ],
+  "success_criteria": {
+    "catastrophic_miss_reduction": true,
+    "robustness_delta_min": 0.3,
+    "assumption_error_reduction": true,
+    "max_abstention_rate": 15.0,
+    "min_certificate_pass_rate": 80.0
+  },
+  "failure_mode_targets": [
+    "catastrophic_misses",
+    "assumption_errors",
+    "hallucination",
+    "unverifiable_claims"
+  ],
+  "notes": "This bundle trades coverage for safety. Expect higher abstention rates but significantly reduced catastrophic failures."
+}

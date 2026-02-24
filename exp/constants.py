@@ -16,7 +16,7 @@ STAGE_BUDGET_GPU_HOURS = {
     4: 900.0,
 }
 
-TRACKS = ("T1", "T2", "T3", "T4", "T5", "T6", "ANCHOR")
+TRACKS = ("T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12", "T13", "ANCHOR")
 
 SEED_POLICY = {
     1: 3,

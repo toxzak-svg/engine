@@ -15,6 +15,7 @@ from exp.models import ExperimentSpec, RunResult
 from exp.spec_utils import build_cost_matched_baseline_spec
 from exp.simulator import simulate_run
 from exp.store import save_comparison, save_run_result
+from exp.runners.inverse_arm_runners import simulate_benchmarks
 
 
 def main() -> None:

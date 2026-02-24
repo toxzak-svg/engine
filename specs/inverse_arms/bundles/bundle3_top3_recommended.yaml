@@ -1,0 +1,49 @@
+{
+  "id": "bundle-3-top3-recommended",
+  "name": "Top 3 Recommended Arms",
+  "description": "Deliberation Collapse + Counterfactual Self-Audit + Noise-Injection Ensemble - attack three different failure modes",
+  "arms": [
+    {
+      "track_id": "T7",
+      "spec_id": "s1-t7-e1",
+      "model_variant": "INV-A-E1",
+      "hypothesis": "Deliberation Collapse - Attack overthinking failure mode"
+    },
+    {
+      "track_id": "T8",
+      "spec_id": "s1-t8-e1",
+      "model_variant": "INV-B-E1",
+      "hypothesis": "Counterfactual Self-Audit - Attack wrong assumptions failure mode"
+    },
+    {
+      "track_id": "T11",
+      "spec_id": "s1-t11-e1",
+      "model_variant": "INV-E-E1",
+      "hypothesis": "Noise-Injection Ensemble - Attack instruction-following failure mode"
+    }
+  ],
+  "goal": "Attack three different failure modes: overthinking, wrong assumptions, instruction-following",
+  "expected_cost_multiplier": 1.2,
+  "risk_level": "medium",
+  "evaluation_metrics": [
+    "accuracy_per_token",
+    "hallucination_surface_rate",
+    "robustness_delta",
+    "assumption_error_rate",
+    "constraint_adherence_score",
+    "instruction_following_rate"
+  ],
+  "success_criteria": {
+    "accuracy_per_token_min_delta": 0.02,
+    "robustness_delta_min": 0.3,
+    "constraint_adherence_min_delta": 3.0,
+    "no_fluency_regression": true
+  },
+  "failure_mode_targets": [
+    "overthinking",
+    "wrong_assumption",
+    "instruction_following_failures",
+    "constraint_violation"
+  ],
+  "notes": "These arms are inverse-directed, cheap to implement, and attack three orthogonal failure modes. Recommended for fast iteration."
+}

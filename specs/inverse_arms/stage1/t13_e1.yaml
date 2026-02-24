@@ -1,0 +1,45 @@
+{
+  "id": "s1-t13-e1",
+  "track_id": "T13",
+  "stage": 1,
+  "hypothesis": "Adversarial User Simulator - Rewrite requests with ambiguity and conflicting constraints, then answer safely with bracketed assumptions.",
+  "model_variant": "INV-G-E1",
+  "baseline_id": "s1-t13-baseline",
+  "train_budget_gpu_h": 100.0,
+  "infer_budget_gpu_h": 50.0,
+  "max_context": 64000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "wrong_assumption_rate",
+    "adversarial_robustness_score",
+    "abstention_rate",
+    "ambiguity_handling_rate"
+  ],
+  "seeds": [101, 102, 103],
+  "promotion_gate": {
+    "next_stage": 2,
+    "delta_composite_min": 1.5,
+    "stable_training_required": true,
+    "wrong_assumption_reduction_required": true,
+    "adversarial_robustness_min_delta": 3.0,
+    "max_abstention_rate": 15.0
+  },
+  "params": {
+    "adversary_enabled": true,
+    "adversary_transformations": ["add_ambiguity", "add_conflicting_constraints", "add_hallucination_bait"],
+    "answer_style": "conservative_with_bracketed_assumptions",
+    "interactive_clarification": false
+  }
+}

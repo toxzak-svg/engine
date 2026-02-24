@@ -20,6 +20,11 @@ def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | 
     latency_overhead_pct = _latency_overhead_pct(candidate, baseline)
     stable_training = "unstable_training" not in candidate.failure_flags
 
+    # New metrics calculations
+    verbosity_penalty = _verbosity_penalty(candidate, baseline)
+    robustness_delta = _robustness_delta(candidate, baseline)
+    constraint_adherence_score = _constraint_adherence_score(candidate)
+
     significance = _bootstrap_significance(candidate, baseline)
 
     stage_gate_pass = _stage_gate_pass(
@@ -39,6 +44,9 @@ def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | 
         "stable_training": stable_training,
         "fluency_drop_pct": round(fluency_drop_pct, 4),
         "latency_overhead_pct": round(latency_overhead_pct, 4),
+        "verbosity_penalty": round(verbosity_penalty, 4),
+        "robustness_delta": round(robustness_delta, 4),
+        "constraint_adherence_score": round(constraint_adherence_score, 4),
         "stage_gate_pass": stage_gate_pass,
         "track_specific_pass": track_specific_pass,
         "overall_pass": bool(equal_cost_pass and stage_gate_pass and track_specific_pass),
@@ -55,6 +63,28 @@ def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | 
         candidate_stage=candidate.stage,
         track_id=candidate.track_id,
     )
+
+# Helper functions for new metrics
+
+def _verbosity_penalty(candidate: RunResult, baseline: RunResult) -> float:
+    """Calculate verbosity penalty as correctness at fixed output length."""
+    candidate_length = candidate.metric_values.get("output_length", 0)
+    baseline_length = baseline.metric_values.get("output_length", 0)
+    if baseline_length == 0:
+        return 0.0
+    return (candidate_length - baseline_length) / baseline_length
+
+
+def _robustness_delta(candidate: RunResult, baseline: RunResult) -> float:
+    """Calculate robustness delta: fraction of tasks where counterfactual audit flips incorrect → correct."""
+    candidate_robustness = candidate.metric_values.get("robustness", 0)
+    baseline_robustness = baseline.metric_values.get("robustness", 0)
+    return candidate_robustness - baseline_robustness
+
+
+def _constraint_adherence_score(candidate: RunResult) -> float:
+    """Calculate constraint adherence score."""
+    return candidate.metric_values.get("constraint_adherence", 0)
 
 
 def _delta_metrics(candidate: dict[str, float], baseline: dict[str, float]) -> dict[str, float]:

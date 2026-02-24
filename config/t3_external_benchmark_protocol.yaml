@@ -1,7 +1,7 @@
 {
   "protocol_name": "t3_external_engine_head_to_head",
   "version": "1.0.0",
-  "owner": "unassigned",
+  "owner": "TBD",
   "status": "draft_ready_for_execution",
   "purpose": "Fairly determine whether T3 outperforms current external engines under matched constraints.",
   "claim_scope": {

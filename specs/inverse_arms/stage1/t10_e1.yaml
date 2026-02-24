@@ -1,0 +1,45 @@
+{
+  "id": "s1-t10-e1",
+  "track_id": "T10",
+  "stage": 1,
+  "hypothesis": "Proof-Carrying Outputs - Require compact certificate for each response to reduce catastrophic misses through honesty bias.",
+  "model_variant": "INV-D-E1",
+  "baseline_id": "s1-t10-baseline",
+  "train_budget_gpu_h": 100.0,
+  "infer_budget_gpu_h": 50.0,
+  "max_context": 64000,
+  "datasets": [
+    "needle_32k",
+    "needle_64k",
+    "longbench",
+    "gsm8k",
+    "bbh",
+    "consistency_longform"
+  ],
+  "metrics": [
+    "long_context",
+    "reasoning",
+    "consistency",
+    "fluency",
+    "composite",
+    "critical_fact_miss_rate",
+    "abstention_rate",
+    "certificate_pass_rate",
+    "catastrophic_miss_rate"
+  ],
+  "seeds": [101, 102, 103],
+  "promotion_gate": {
+    "next_stage": 2,
+    "delta_composite_min": 1.5,
+    "stable_training_required": true,
+    "catastrophic_miss_reduction_required": true,
+    "max_abstention_rate": 15.0,
+    "min_certificate_pass_rate": 80.0
+  },
+  "params": {
+    "certificate_format": "3_claims_plus_derivation",
+    "certificate_max_tokens": 64,
+    "abstain_on_failure": true,
+    "consistency_check_enabled": true
+  }
+}
