@@ -22,6 +22,7 @@ from .reporting import load_comparison_reports, load_window_artifacts
 from .simulator import evaluate_track_pass, simulate_run
 from .store import (
     list_comparisons,
+    list_run_results,
     load_run_result,
     save_comparison,
     save_run_result,
@@ -287,12 +288,13 @@ def _cmd_compare(args: argparse.Namespace) -> int:
     candidate = load_run_result(args.candidate)
     baseline = load_run_result(args.baseline)
     anchor = load_run_result(args.anchor) if args.anchor else None
+    anchor_history = [run for run in list_run_results() if run.track_id == "ANCHOR"] if anchor is not None else None
     if candidate.track_id != baseline.track_id:
         raise ValueError(
             f"track mismatch: candidate track {candidate.track_id} vs baseline track {baseline.track_id}. "
             "Compare each track against its own baseline."
         )
-    report = compare_runs(candidate, baseline, anchor=anchor)
+    report = compare_runs(candidate, baseline, anchor=anchor, anchor_history=anchor_history)
     path = save_comparison(report)
     print(
         json.dumps(
@@ -330,7 +332,20 @@ def _cmd_memo(args: argparse.Namespace) -> int:
         reports = load_comparison_reports(window.comparison_files)
     else:
         reports = list_comparisons()
-    memo = build_decision_memo(args.stage, reports)
+    run_ids = sorted(
+        {
+            run_id
+            for report in reports
+            for run_id in report.candidate_run_ids + report.baseline_run_ids
+        }
+    )
+    run_lookup = {}
+    for run_id in run_ids:
+        try:
+            run_lookup[run_id] = load_run_result(run_id)
+        except FileNotFoundError:
+            continue
+    memo = build_decision_memo(args.stage, reports, run_lookup=run_lookup)
     out_dir = Path("artifacts/memos")
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"stage{args.stage}_decision.md"

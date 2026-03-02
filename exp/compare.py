@@ -3,17 +3,27 @@ from __future__ import annotations
 from statistics import mean
 from typing import Any
 
+from .anchor_audit import audit_comparison_anchor_validity, check_anchor_stability
 from .models import ComparisonReport, RunResult
 from .simulator import evaluate_track_pass, stable_rng
 
 
-def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | None = None) -> ComparisonReport:
+def compare_runs(
+    candidate: RunResult,
+    baseline: RunResult,
+    anchor: RunResult | None = None,
+    anchor_history: list[RunResult] | None = None,
+) -> ComparisonReport:
+    """Compare a candidate run against its baseline and optional anchor.
+
+    When ``anchor_history`` is provided alongside ``anchor``, anchor-relative
+    deltas are validated against the historical anchor drift audit. Invalid
+    anchor-relative deltas are suppressed so downstream consumers fall back to
+    stage-baseline deltas automatically.
+    """
     delta_metrics = _delta_metrics(candidate.metric_values, baseline.metric_values)
     anchor_delta_metrics: dict[str, float] = {}
     anchor_run_ids: list[str] = []
-    if anchor is not None:
-        anchor_delta_metrics = _delta_metrics(candidate.metric_values, anchor.metric_values)
-        anchor_run_ids = [anchor.run_id]
     parity_pct = _cost_parity_pct(candidate, baseline)
     equal_cost_pass = parity_pct <= 2.0
     fluency_drop_pct = baseline.metric_values["fluency"] - candidate.metric_values["fluency"]
@@ -26,6 +36,24 @@ def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | 
     constraint_adherence_score = _constraint_adherence_score(candidate)
 
     significance = _bootstrap_significance(candidate, baseline)
+    anchor_validity: dict[str, Any] | None = None
+
+    if anchor is not None and anchor_history is not None:
+        anchor_audit = check_anchor_stability(anchor_history)
+        anchor_validity = audit_comparison_anchor_validity(anchor_audit, candidate.stage)
+        significance["anchor_audit"] = anchor_audit.to_dict()
+        significance["anchor_validity"] = anchor_validity
+    elif anchor is not None:
+        anchor_validity = {
+            "valid": True,
+            "warning": False,
+            "message": "No anchor history provided; assuming anchor-relative deltas are reliable.",
+        }
+        significance["anchor_validity"] = anchor_validity
+
+    if anchor is not None and (anchor_validity is None or anchor_validity["valid"]):
+        anchor_delta_metrics = _delta_metrics(candidate.metric_values, anchor.metric_values)
+        anchor_run_ids = [anchor.run_id]
 
     stage_gate_pass = _stage_gate_pass(
         stage=candidate.stage,
@@ -51,6 +79,10 @@ def compare_runs(candidate: RunResult, baseline: RunResult, anchor: RunResult | 
         "track_specific_pass": track_specific_pass,
         "overall_pass": bool(equal_cost_pass and stage_gate_pass and track_specific_pass),
     }
+    if anchor_validity is not None:
+        pass_fail["anchor_valid"] = bool(anchor_validity["valid"])
+        pass_fail["anchor_warning"] = bool(anchor_validity["warning"])
+        pass_fail["anchor_message"] = str(anchor_validity["message"])
 
     return ComparisonReport(
         candidate_run_ids=[candidate.run_id],

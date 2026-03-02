@@ -3,11 +3,16 @@ from __future__ import annotations
 from collections import defaultdict
 from statistics import mean
 
+from .attribution import attribute_all_tracks, format_attribution_report
 from .constants import ENGINEERING_COMPLEXITY
-from .models import ComparisonReport
+from .models import ComparisonReport, RunResult
 
 
-def build_decision_memo(stage: int, reports: list[ComparisonReport]) -> str:
+def build_decision_memo(
+    stage: int,
+    reports: list[ComparisonReport],
+    run_lookup: dict[str, RunResult] | None = None,
+) -> str:
     stage_reports_all = [report for report in reports if report.candidate_stage == stage]
     recovery_reports = [
         report for report in stage_reports_all if report.candidate_run_ids and report.candidate_run_ids[0].startswith("recovery-")
@@ -81,5 +86,55 @@ def build_decision_memo(stage: int, reports: list[ComparisonReport]) -> str:
         lines.append(
             f"Prioritize `{top['track_id']}` first based on strongest pass-adjusted anchor gains and current gate performance."
         )
+    attribution_sections = _format_ranked_attributions(rows, grouped, run_lookup)
+    if attribution_sections:
+        lines.append("")
+        lines.append("## Param Attribution")
+        lines.append("")
+        lines.extend(attribution_sections)
     lines.append("")
     return "\n".join(lines)
+
+
+def _format_ranked_attributions(
+    ranked_rows: list[dict[str, object]],
+    grouped_reports: dict[str, list[ComparisonReport]],
+    run_lookup: dict[str, RunResult] | None,
+) -> list[str]:
+    if not run_lookup:
+        return []
+
+    ordered_track_ids = [str(row["track_id"]) for row in ranked_rows]
+    runs_by_track: dict[str, list[RunResult]] = {}
+    baseline_composites: dict[str, float] = {}
+
+    for track_id in ordered_track_ids:
+        group = grouped_reports.get(track_id, [])
+        candidate_runs = [
+            run_lookup[run_id]
+            for report in group
+            for run_id in report.candidate_run_ids
+            if run_id in run_lookup
+        ]
+        baseline_runs = [
+            run_lookup[run_id]
+            for report in group
+            for run_id in report.baseline_run_ids
+            if run_id in run_lookup
+        ]
+        if not candidate_runs or not baseline_runs:
+            continue
+        runs_by_track[track_id] = candidate_runs
+        baseline_composites[track_id] = mean(
+            run.metric_values.get("composite", 0.0) for run in baseline_runs
+        )
+
+    if not runs_by_track:
+        return []
+
+    attribution_results = attribute_all_tracks(runs_by_track, baseline_composites)
+    return [
+        format_attribution_report(attribution_results[track_id])
+        for track_id in ordered_track_ids
+        if track_id in attribution_results and attribution_results[track_id].attributions
+    ]

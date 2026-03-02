@@ -571,4 +571,4 @@ def list_inverse_arms() -> list[InverseArmType]:
 
 def list_inverse_arm_tracks() -> list[str]:
     """List all track IDs for inverse arms."""
-    return ["T7", "T8", "T9", "T10", "T11", "T12", "T13"]
+    return ["T7", "T8", "T9", "T10", "T11", "T12", "T13", "T14", "T15", "T16", "T17", "T-META"]

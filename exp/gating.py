@@ -3,7 +3,7 @@ from __future__ import annotations
 from statistics import mean
 from typing import Any
 
-from .models import ComparisonReport
+from .models import ComparisonReport, RunResult
 
 
 def gate_stage(stage: int, reports: list[ComparisonReport]) -> dict[str, Any]:
@@ -71,6 +71,10 @@ def gate_stage(stage: int, reports: list[ComparisonReport]) -> dict[str, Any]:
     rejected_tracks = [row["track_id"] for row in track_rows if row["track_id"] not in promoted_tracks]
     qualified_count = sum(1 for report in stage_reports if report.pass_fail.get("overall_pass", False))
 
+    # Annotate Pareto flags (no run_lookup needed for basic mode)
+    track_rows = pareto_promote(track_rows)
+    pareto_tracks = [row["track_id"] for row in track_rows if row.get("pareto_promoted", False)]
+
     return {
         "stage": stage,
         "candidate_count_all": len(stage_reports_all),
@@ -86,8 +90,99 @@ def gate_stage(stage: int, reports: list[ComparisonReport]) -> dict[str, Any]:
         "rejected_run_ids": [report.candidate_run_ids[0] for report in rejected],
         "rejected_tracks": rejected_tracks,
         "promotion_limit": promotion_limit,
+        "pareto_tracks": pareto_tracks,
         "thresholds": _thresholds_for_stage(stage),
     }
+
+
+# ---------------------------------------------------------------------------
+# Pareto-Frontier Promotion
+# ---------------------------------------------------------------------------
+
+def pareto_promote(
+    track_rows: list[dict[str, Any]],
+    run_lookup: dict[str, RunResult] | None = None,
+) -> list[dict[str, Any]]:
+    """Identify tracks on the Pareto frontier across multiple objectives.
+
+    A track is Pareto-non-dominated if no other track beats it on ALL of:
+        - mean_anchor (composite delta vs anchor, higher is better)
+        - neg_latency_p50 (lower latency is better → negate for maximisation)
+        - neg_energy_kwh (lower energy is better → negate for maximisation)
+        - mean_fluency (higher fluency is better)
+
+    Tracks on the Pareto frontier receive a ``pareto_promoted`` flag even if
+    they miss the composite threshold, making them visible for deployment
+    scenarios that prioritise latency or energy over raw composite.
+
+    Args:
+        track_rows: List of track summary dicts from gate_stage().
+                    Each dict must have at least ``track_id`` and
+                    ``mean_anchor``. Latency/energy/fluency are optional
+                    and default to 0.0 when absent.
+        run_lookup: Optional dict mapping run_id → RunResult for richer
+                    latency/energy/fluency data. When provided, values are
+                    pulled from the best_promotable run for each track.
+
+    Returns:
+        The same list of track_rows with a ``pareto_promoted`` bool added
+        to each dict. Rows are NOT reordered.
+    """
+    if not track_rows:
+        return track_rows
+
+    # Build objective vectors per track
+    objectives: list[dict[str, float]] = []
+    for row in track_rows:
+        best_run: RunResult | None = None
+        if run_lookup is not None:
+            best_report = row.get("best_promotable")
+            if best_report is not None:
+                run_id = best_report.candidate_run_ids[0] if best_report.candidate_run_ids else ""
+                best_run = run_lookup.get(run_id)
+
+        latency = best_run.latency_p50 if best_run else 0.0
+        energy = best_run.energy_kwh if best_run else 0.0
+        fluency = best_run.metric_values.get("fluency", 0.0) if best_run else 0.0
+
+        objectives.append({
+            "mean_anchor": float(row.get("mean_anchor", 0.0)),
+            "neg_latency": -latency,          # negate: lower latency is better
+            "neg_energy": -energy,            # negate: lower energy is better
+            "fluency": fluency,
+        })
+
+    obj_keys = ["mean_anchor", "neg_latency", "neg_energy", "fluency"]
+
+    # Determine Pareto non-dominated set
+    n = len(objectives)
+    dominated = [False] * n
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                continue
+            # Check if j dominates i: j >= i on all objectives AND j > i on at least one
+            all_ge = all(objectives[j][k] >= objectives[i][k] for k in obj_keys)
+            any_gt = any(objectives[j][k] > objectives[i][k] for k in obj_keys)
+            if all_ge and any_gt:
+                dominated[i] = True
+                break
+
+    # A Pareto frontier must be non-empty. If pathological inputs ever mark
+    # everything dominated, keep the strongest objective vector on the frontier.
+    if all(dominated):
+        frontier_idx = max(
+            range(n),
+            key=lambda idx: tuple(objectives[idx][k] for k in obj_keys),
+        )
+        dominated[frontier_idx] = False
+
+    # Annotate rows
+    for row, objective, is_dominated in zip(track_rows, objectives, dominated):
+        row["pareto_promoted"] = not is_dominated
+        row["pareto_objectives"] = objective
+
+    return track_rows
 
 
 def _promotion_track_limit(stage: int) -> int:
