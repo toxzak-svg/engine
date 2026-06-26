@@ -22,3 +22,8 @@ Daily sync.
 
 - Daily auto-sync: initial CHANGELOG entry (no other local changes).
 
+
+## 2026-06-26
+
+Daily sync.
+
